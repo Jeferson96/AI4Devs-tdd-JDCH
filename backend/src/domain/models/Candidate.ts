@@ -1,9 +1,8 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import prisma from '../../lib/prisma';
 import { Education } from './Education';
 import { WorkExperience } from './WorkExperience';
 import { Resume } from './Resume';
-
-const prisma = new PrismaClient();
 
 export class Candidate {
     id?: number;
@@ -74,34 +73,28 @@ export class Candidate {
         }
 
         if (this.id) {
-            // Actualizar un candidato existente
             try {
                 return await prisma.candidate.update({
                     where: { id: this.id },
                     data: candidateData
                 });
             } catch (error: any) {
-                console.log(error);
-                if (error instanceof Prisma.PrismaClientInitializationError) {
-                    // Database connection error
-                    throw new Error('No se pudo conectar con la base de datos. Por favor, asegúrese de que el servidor de base de datos esté en ejecución.');
-                } else if (error.code === 'P2025') {
-                    // Record not found error
+                if (error.code === 'P2025') {
                     throw new Error('No se pudo encontrar el registro del candidato con el ID proporcionado.');
                 } else {
                     throw error;
                 }
             }
         } else {
-            // Crear un nuevo candidato
             try {
                 const result = await prisma.candidate.create({
                     data: candidateData
                 });
                 return result;
             } catch (error: any) {
-                if (error instanceof Prisma.PrismaClientInitializationError) {
-                    // Database connection error
+                if (error.code === 'P2002') {
+                    throw new Error('The email already exists in the database');
+                } else if (error.code === 'P1001') {
                     throw new Error('No se pudo conectar con la base de datos. Por favor, asegúrese de que el servidor de base de datos esté en ejecución.');
                 } else {
                     throw error;
